@@ -98,6 +98,7 @@ export async function listApiKeys(tenantId: string): Promise<ApiKey[]> {
     .from('api_keys')
     .select('*')
     .eq('tenant_id', tenantId)
+    .eq('is_active', true)
     .order('created_at', { ascending: false });
   return data ?? [];
 }

@@ -13,7 +13,16 @@ export async function GET() {
   if (!tenant) return NextResponse.json({ keys: [] });
 
   const keys = await listApiKeys(tenant.id);
-  return NextResponse.json({ keys });
+  // Normalize key_prefix → prefix for the client
+  const normalized = keys.map((k) => ({
+    id: k.id,
+    name: k.name,
+    prefix: k.key_prefix,
+    is_active: k.is_active,
+    last_used_at: k.last_used_at,
+    created_at: k.created_at,
+  }));
+  return NextResponse.json({ keys: normalized });
 }
 
 // POST /api/keys — create a new API key

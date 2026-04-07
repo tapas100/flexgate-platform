@@ -1,9 +1,10 @@
-import { auth } from '@clerk/nextjs/server';
+content = r"""import { auth } from '@clerk/nextjs/server';
 import { getTenantByClerkId, listApiKeys } from '@/lib/db/queries';
 import { PLANS } from '@/lib/stripe/plans';
 import Link from 'next/link';
 import NewKeyBanner from './NewKeyBanner';
 import ActiveKeyCard from './ActiveKeyCard';
+import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -12,46 +13,28 @@ export default async function DashboardPage() {
   const used = tenant?.requests_used ?? 0;
   const limit = tenant?.request_limit ?? PLANS.free.requestLimit;
   const pct = Math.min(100, Math.round((used / limit) * 100));
+
   const apiKeys = tenant ? await listApiKeys(tenant.id) : [];
   const activeKey = apiKeys[0] ?? null;
+
+  if (!activeKey) {
+    redirect('/api-keys');
+  }
 
   return (
     <div className="max-w-4xl">
       <h1 className="text-2xl font-bold mb-2">Dashboard</h1>
       <p className="text-gray-500 text-sm mb-8">Welcome back! Here&apos;s your FlexGate overview.</p>
+
       <NewKeyBanner />
-      {activeKey ? (
-        <ActiveKeyCard
-          keyPrefix={activeKey.key_prefix}
-          planName={plan.name}
-          lastUsedAt={activeKey.last_used_at}
-          appUrl={process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}
-        />
-      ) : (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 mb-8">
-          <div className="flex items-start gap-5">
-            <div className="text-4xl">🔑</div>
-            <div className="flex-1">
-              <h2 className="text-lg font-bold text-amber-900 mb-1">Create your first API key</h2>
-              <p className="text-sm text-amber-800 mb-4">
-                You need an API key to authenticate requests to the FlexGate Intelligence Server.
-                Your free plan includes <strong>100,000 requests/month</strong>.
-              </p>
-              <div className="bg-white border border-amber-200 rounded-xl p-4 mb-5 font-mono text-xs text-gray-600">
-                <p className="text-gray-400 mb-1">Once created, use it like this:</p>
-                curl -H &quot;Authorization: Bearer fg_live_...&quot; \<br />
-                &nbsp;&nbsp;http://localhost:3000/api/v1/analyze
-              </div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <Link href="/api-keys" className="bg-amber-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-amber-700 transition">
-                  Create API key →
-                </Link>
-                <span className="text-xs text-amber-700">Takes less than 10 seconds</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
+      <ActiveKeyCard
+        keyPrefix={activeKey.key_prefix}
+        planName={plan.name}
+        lastUsedAt={activeKey.last_used_at}
+        appUrl={process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <p className="text-sm text-gray-500 mb-1">Current Plan</p>
@@ -78,6 +61,7 @@ export default async function DashboardPage() {
           <p className="text-sm text-gray-400 mt-2">{pct}% used</p>
         </div>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/api-keys" className="bg-white rounded-2xl border border-gray-200 p-6 hover:border-indigo-300 transition">
           <p className="text-lg font-semibold mb-1">🔑 API Keys</p>
@@ -92,10 +76,15 @@ export default async function DashboardPage() {
           <p className="text-sm text-gray-500">Manage your subscription and payment method.</p>
         </Link>
         <a href="https://docs.flexgate.io" target="_blank" rel="noopener noreferrer" className="bg-white rounded-2xl border border-gray-200 p-6 hover:border-indigo-300 transition">
-          <p className="text-lg font-semibold mb-1">�� Documentation</p>
+          <p className="text-lg font-semibold mb-1">📚 Documentation</p>
           <p className="text-sm text-gray-500">Integration guides and API reference.</p>
         </a>
       </div>
     </div>
   );
 }
+"""
+
+with open('src/app/(dashboard)/dashboard/page.tsx', 'w') as f:
+    f.write(content)
+print('Written successfully')

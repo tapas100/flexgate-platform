@@ -1,4 +1,4 @@
-import Link from 'next/link';
+layout_content = r"""import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 import { auth } from '@clerk/nextjs/server';
 import { upsertTenant, listApiKeys, createApiKey } from '@/lib/db/queries';
@@ -16,7 +16,7 @@ async function provisionUser(): Promise<string | null> {
   if (existing.length === 0) {
     const { raw, hash, prefix } = generateApiKey();
     await createApiKey(tenant.id, hash, prefix, 'Free Tier Key');
-    return raw; // return raw key to pass to client once
+    return raw;
   }
   return null;
 }
@@ -32,7 +32,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const newKey = await provisionUser();
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Inject new key into sessionStorage once, so dashboard can read it */}
       {newKey && (
         <script
           dangerouslySetInnerHTML={{
@@ -40,7 +39,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           }}
         />
       )}
-      {/* Sidebar */}
       <aside className="w-56 bg-white border-r border-gray-100 flex flex-col">
         <div className="px-6 py-5 border-b border-gray-100">
           <Link href="/" className="font-bold text-lg tracking-tight">⚡ FlexGate</Link>
@@ -60,9 +58,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <UserButton />
         </div>
       </aside>
-
-      {/* Main */}
       <main className="flex-1 p-8 overflow-auto">{children}</main>
     </div>
   );
 }
+"""
+
+with open('src/app/(dashboard)/layout.tsx', 'w') as f:
+    f.write(layout_content)
+print('Layout written successfully')
